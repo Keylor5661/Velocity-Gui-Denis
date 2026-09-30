@@ -1,26 +1,26 @@
---// Speed Controller GUI
+--// Velocity + Noclip GUI
 --// LocalScript -> StarterPlayerScripts
 
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 --==================================================
--- CONFIGURACIÓN
+-- CONFIG
 --==================================================
 
 local MIN_SPEED = 0
-local MAX_SPEED = 200
-local DEFAULT_SPEED = 16
+local MAX_SPEED = 1000000 -- 1 millón; prácticamente sin límite para WalkSpeed
 
 --==================================================
 -- GUI
 --==================================================
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "SpeedControllerGUI"
+gui.Name = "VelocityNoclipGUI"
 gui.ResetOnSpawn = false
 gui.Parent = playerGui
 
@@ -29,10 +29,9 @@ gui.Parent = playerGui
 --==================================================
 
 local floatingButton = Instance.new("TextButton")
-floatingButton.Name = "FloatingButton"
-floatingButton.Size = UDim2.new(0, 60, 0, 60)
-floatingButton.Position = UDim2.new(0, 20, 0.5, -30)
-floatingButton.BackgroundColor3 = Color3.fromRGB(45, 120, 255)
+floatingButton.Size = UDim2.new(0,60,0,60)
+floatingButton.Position = UDim2.new(0,20,0.5,-30)
+floatingButton.BackgroundColor3 = Color3.fromRGB(45,120,255)
 floatingButton.Text = "🏃"
 floatingButton.TextSize = 27
 floatingButton.Font = Enum.Font.GothamBold
@@ -49,10 +48,11 @@ floatCorner.Parent = floatingButton
 --==================================================
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 280, 0, 190)
-frame.Position = UDim2.new(0.5, -140, 0.5, -95)
+frame.Size = UDim2.new(0,300,0,245)
+frame.Position = UDim2.new(0.5,-150,0.5,-122)
 frame.BackgroundColor3 = Color3.fromRGB(25,25,30)
 frame.BorderSizePixel = 0
+frame.Visible = false
 frame.Parent = gui
 
 local frameCorner = Instance.new("UICorner")
@@ -67,7 +67,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1,-50,0,40)
 title.Position = UDim2.new(0,12,0,5)
 title.BackgroundTransparency = 1
-title.Text = "🏃 Speed Controller"
+title.Text = "🏃 Velocity Control"
 title.TextColor3 = Color3.fromRGB(255,255,255)
 title.TextSize = 20
 title.Font = Enum.Font.GothamBold
@@ -94,7 +94,7 @@ closeCorner.CornerRadius = UDim.new(0,8)
 closeCorner.Parent = close
 
 --==================================================
--- TEXTO VELOCIDAD
+-- VELOCIDAD
 --==================================================
 
 local speedLabel = Instance.new("TextLabel")
@@ -107,15 +107,11 @@ speedLabel.TextSize = 14
 speedLabel.Font = Enum.Font.Gotham
 speedLabel.Parent = frame
 
---==================================================
--- CAJA DE VELOCIDAD
---==================================================
-
 local speedBox = Instance.new("TextBox")
-speedBox.Size = UDim2.new(0,100,0,35)
-speedBox.Position = UDim2.new(0.5,-50,0,70)
+speedBox.Size = UDim2.new(0,110,0,35)
+speedBox.Position = UDim2.new(0.5,-55,0,70)
 speedBox.BackgroundColor3 = Color3.fromRGB(45,45,55)
-speedBox.Text = tostring(DEFAULT_SPEED)
+speedBox.Text = "16"
 speedBox.PlaceholderText = "Velocidad"
 speedBox.TextColor3 = Color3.fromRGB(255,255,255)
 speedBox.TextSize = 18
@@ -129,12 +125,12 @@ boxCorner.CornerRadius = UDim.new(0,8)
 boxCorner.Parent = speedBox
 
 --==================================================
--- BARRA
+-- SLIDER
 --==================================================
 
 local sliderBackground = Instance.new("Frame")
 sliderBackground.Size = UDim2.new(1,-40,0,8)
-sliderBackground.Position = UDim2.new(0,20,0,125)
+sliderBackground.Position = UDim2.new(0,20,0,120)
 sliderBackground.BackgroundColor3 = Color3.fromRGB(65,65,75)
 sliderBackground.BorderSizePixel = 0
 sliderBackground.Parent = frame
@@ -143,7 +139,6 @@ local sliderCorner = Instance.new("UICorner")
 sliderCorner.CornerRadius = UDim.new(1,0)
 sliderCorner.Parent = sliderBackground
 
--- Barra rellenada
 local sliderFill = Instance.new("Frame")
 sliderFill.Size = UDim2.new(0,0,1,0)
 sliderFill.BackgroundColor3 = Color3.fromRGB(45,140,255)
@@ -153,10 +148,6 @@ sliderFill.Parent = sliderBackground
 local fillCorner = Instance.new("UICorner")
 fillCorner.CornerRadius = UDim.new(1,0)
 fillCorner.Parent = sliderFill
-
---==================================================
--- CÍRCULO
---==================================================
 
 local knob = Instance.new("TextButton")
 knob.Size = UDim2.new(0,22,0,22)
@@ -172,16 +163,52 @@ knobCorner.CornerRadius = UDim.new(1,0)
 knobCorner.Parent = knob
 
 --==================================================
+-- NOCLIP
+--==================================================
+
+local noclipButton = Instance.new("TextButton")
+noclipButton.Size = UDim2.new(1,-30,0,45)
+noclipButton.Position = UDim2.new(0,15,0,150)
+noclipButton.BackgroundColor3 = Color3.fromRGB(70,70,80)
+noclipButton.Text = "Noclip Off"
+noclipButton.TextColor3 = Color3.fromRGB(255,255,255)
+noclipButton.TextSize = 18
+noclipButton.Font = Enum.Font.GothamBold
+noclipButton.BorderSizePixel = 0
+noclipButton.Parent = frame
+
+local noclipCorner = Instance.new("UICorner")
+noclipCorner.CornerRadius = UDim.new(0,10)
+noclipCorner.Parent = noclipButton
+
+local noclipEnabled = false
+
+--==================================================
 -- HUMANOID
 --==================================================
 
+local function getCharacter()
+    return player.Character or player.CharacterAdded:Wait()
+end
+
 local function getHumanoid()
-    local character = player.Character or player.CharacterAdded:Wait()
+    local character = getCharacter()
     return character:FindFirstChildOfClass("Humanoid")
 end
 
+--==================================================
+-- VELOCIDAD
+--==================================================
+
 local function setSpeed(speed)
-    speed = math.clamp(math.floor(speed), MIN_SPEED, MAX_SPEED)
+
+    speed = tonumber(speed)
+
+    if not speed then
+        return
+    end
+
+    speed = math.clamp(speed, MIN_SPEED, MAX_SPEED)
 
     local humanoid = getHumanoid()
 
@@ -191,41 +218,29 @@ local function setSpeed(speed)
 
     speedBox.Text = tostring(speed)
 
-    local percentage =
-        (speed - MIN_SPEED) / (MAX_SPEED - MIN_SPEED)
+    -- El slider representa logarítmicamente los valores grandes.
+    local percentage = math.log(speed + 1) / math.log(MAX_SPEED + 1)
 
     sliderFill.Size = UDim2.new(percentage,0,1,0)
     knob.Position = UDim2.new(percentage,0,0.5,0)
 end
 
 --==================================================
--- ACTUALIZAR VELOCIDAD DESDE EL HUMANOID
---==================================================
-
-local function updateFromPlayer()
-    local humanoid = getHumanoid()
-
-    if humanoid then
-        setSpeed(humanoid.WalkSpeed)
-    end
-end
-
-player.CharacterAdded:Connect(function()
-    task.wait(0.5)
-    updateFromPlayer()
-end)
-
---==================================================
--- ESCRIBIR VELOCIDAD
+-- TEXTO
 --==================================================
 
 speedBox.FocusLost:Connect(function()
-    local number = tonumber(speedBox.Text)
 
-    if number then
-        setSpeed(number)
+    local speed = tonumber(speedBox.Text)
+
+    if speed then
+        setSpeed(speed)
     else
-        updateFromPlayer()
+        local humanoid = getHumanoid()
+
+        if humanoid then
+            speedBox.Text = tostring(humanoid.WalkSpeed)
+        end
     end
 end)
 
@@ -233,17 +248,24 @@ end)
 -- SLIDER
 --==================================================
 
-local dragging = false
+local sliderDragging = false
 
-local function updateSlider(inputX)
-    local absolutePosition = sliderBackground.AbsolutePosition.X
-    local absoluteSize = sliderBackground.AbsoluteSize.X
+local function updateSlider(x)
 
-    local percentage =
-        math.clamp((inputX - absolutePosition) / absoluteSize,0,1)
+    local startX = sliderBackground.AbsolutePosition.X
+    local width = sliderBackground.AbsoluteSize.X
 
+    local percentage = math.clamp(
+        (x - startX) / width,
+        0,
+        1
+    )
+
+    -- Escala logarítmica para poder controlar velocidades enormes.
     local speed =
-        MIN_SPEED + (MAX_SPEED - MIN_SPEED) * percentage
+        math.exp(
+            percentage * math.log(MAX_SPEED + 1)
+        ) - 1
 
     setSpeed(speed)
 end
@@ -253,7 +275,7 @@ sliderBackground.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
 
-        dragging = true
+        sliderDragging = true
         updateSlider(input.Position.X)
     end
 end)
@@ -263,13 +285,13 @@ knob.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
 
-        dragging = true
+        sliderDragging = true
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
 
-    if not dragging then
+    if not sliderDragging then
         return
     end
 
@@ -285,7 +307,63 @@ UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
 
-        dragging = false
+        sliderDragging = false
+    end
+end)
+
+--==================================================
+-- NOCLIP
+--==================================================
+
+local function updateNoclip()
+
+    if not noclipEnabled then
+        return
+    end
+
+    local character = player.Character
+
+    if not character then
+        return
+    end
+
+    for _, object in ipairs(character:GetDescendants()) do
+
+        if object:IsA("BasePart") then
+            object.CanCollide = false
+        end
+
+    end
+end
+
+RunService.Stepped:Connect(updateNoclip)
+
+noclipButton.MouseButton1Click:Connect(function()
+
+    noclipEnabled = not noclipEnabled
+
+    if noclipEnabled then
+
+        noclipButton.Text = "Noclip On"
+        noclipButton.BackgroundColor3 = Color3.fromRGB(45,170,85)
+
+        updateNoclip()
+
+    else
+
+        noclipButton.Text = "Noclip Off"
+        noclipButton.BackgroundColor3 = Color3.fromRGB(70,70,80)
+
+        local character = player.Character
+
+        if character then
+            for _, object in ipairs(character:GetDescendants()) do
+                if object:IsA("BasePart") then
+                    object.CanCollide = true
+                end
+            end
+        end
+
     end
 end)
 
@@ -354,9 +432,39 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
+floatingButton.Activated:Connect(function()
+
+    if moved then
+        return
+    end
+
+    frame.Visible = not frame.Visible
+end)
+
 --==================================================
--- VELOCIDAD INICIAL
+-- RESPAWN
 --==================================================
 
+player.CharacterAdded:Connect(function()
+
+    task.wait(0.5)
+
+    local humanoid = getHumanoid()
+
+    if humanoid then
+        speedBox.Text = tostring(humanoid.WalkSpeed)
+    end
+
+    if noclipEnabled then
+        updateNoclip()
+    end
+end)
+
+-- Velocidad inicial
 task.wait(0.5)
-updateFromPlayer()
+
+local humanoid = getHumanoid()
+
+if humanoid then
+    setSpeed(humanoid.WalkSpeed)
+end
